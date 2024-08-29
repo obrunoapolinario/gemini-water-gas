@@ -37,6 +37,5 @@ model Measure {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  @@index([customerId])
-  @@index([measureType])
+  @@index([customerId, measureDatetime, measureType], name: "unique_measure_per_month")
 }

@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import logger from './libs/pino';
+import { measureRoutes } from './modules/measures/routes';
 
 const createApp = async () => {
   const app = Fastify({
@@ -12,7 +13,6 @@ const createApp = async () => {
       reqId: request.id,
       method: request.method,
       url: request.routeOptions.url,
-      path: request.routerPath,
       parameters: request.params,
       headers: request.headers,
       body: request.body ? request.body : undefined
@@ -41,6 +41,14 @@ const createApp = async () => {
     }
   
     logger.info(responseInfo, 'response sent')
+  });
+
+  app.register(measureRoutes);
+
+  app.addHook('onRoute', routeOptions => {
+    if (routeOptions.routePath !== '' && routeOptions.routePath !== '/*') {
+      logger.info(`${routeOptions.method} ${routeOptions.routePath}`, 'route added');
+    }
   });
 
   return app;
