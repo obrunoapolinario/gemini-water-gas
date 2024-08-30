@@ -19,8 +19,7 @@ enum MeasureType {
 }
 
 model Customer {
-  id       String    @id @default(uuid())
-  code     String    @unique
+  id       String @id
   measures Measure[]
 }
 
@@ -33,7 +32,6 @@ model Measure {
   measureValue    Int
   imageUrl        String
   hasConfirmed    Boolean     @default(false)
-  confirmedValue  Int?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 

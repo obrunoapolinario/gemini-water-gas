@@ -12,21 +12,15 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 const fileManager = new GoogleAIFileManager(API_KEY);
 
 // Get the Gemini Pro model
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-export const uploadImage = async (
-	filePath: string,
-	mimeType: string,
-	displayName: string,
-) => {
+export const uploadImage = async (filePath: string, mimeType: string, displayName: string) => {
 	try {
 		const uploadResponse = await fileManager.uploadFile(filePath, {
 			mimeType,
 			displayName,
 		});
-		logger.debug(
-			`Uploaded file ${uploadResponse.file.displayName} as: ${uploadResponse.file.uri}`,
-		);
+		logger.debug(`Uploaded file ${uploadResponse.file.displayName} as: ${uploadResponse.file.uri}`);
 		return uploadResponse.file;
 	} catch (error) {
 		logger.error("Error uploading file:", error);
@@ -37,9 +31,7 @@ export const uploadImage = async (
 export const getFileMetadata = async (fileName: string) => {
 	try {
 		const getResponse = await fileManager.getFile(fileName);
-		logger.debug(
-			`Retrieved file ${getResponse.displayName} as ${getResponse.uri}`,
-		);
+		logger.debug(`Retrieved file ${getResponse.displayName} as ${getResponse.uri}`);
 		return getResponse;
 	} catch (error) {
 		logger.error("Error getting file metadata:", error);
@@ -47,11 +39,7 @@ export const getFileMetadata = async (fileName: string) => {
 	}
 };
 
-export const generateContentWithImage = async (
-	fileUri: string,
-	mimeType: string,
-	prompt: string,
-) => {
+export const generateContentWithImage = async (fileUri: string, mimeType: string, prompt: string) => {
 	try {
 		const result = await model.generateContent([
 			{

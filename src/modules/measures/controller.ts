@@ -1,14 +1,13 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
-import { uploadSchema } from './schemas'
-import type { MeasureService } from './service'
-import { ZodError } from 'zod'
+import type { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify'
+import { confirmSchema, measureTypeEnumSchema, uploadSchema } from './schemas'
+import { z, ZodError } from 'zod'
 import { Base64 } from 'js-base64'
 import logger from '../../libs/pino'
+import { confirmMeasure, createMeasure } from './service'
+import { listByCustomerCode } from './repository'
 
-export class MeasureController {
-  constructor(private measureService: MeasureService) {}
-
-  async upload(request: FastifyRequest, reply: FastifyReply) {
+export const measureController = async (fastify: FastifyInstance) => {
+  fastify.post('/upload', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const data = uploadSchema.parse(request.body);
   
@@ -19,14 +18,22 @@ export class MeasureController {
         });
       }
   
-      const result = await this.measureService.createMeasure(data);
+      const result = await createMeasure(data);
+      
+      if ('error_code' in result) {
+        if (result.error_code === 'DOUBLE_REPORT') {
+          return reply.code(409).send(result);
+        }
+        return reply.code(400).send(result);
+      }
+      
       return reply.code(200).send(result);
     } catch (error) {
-      logger.error(error);
+      logger.error('Error in upload:', error);
       if (error instanceof ZodError) {
         return reply.code(400).send({
           error_code: "INVALID_DATA",
-          error_description: error.message
+          error_description: error.issues.map(issue => issue.message).join(', ')
         });
       }
       return reply.code(500).send({
@@ -34,20 +41,20 @@ export class MeasureController {
         error_description: "An unexpected error occurred"
       });
     }
-  }
-/*
-  async confirm(request: FastifyRequest, reply: FastifyReply) {
+  });
+
+  fastify.patch('/confirm', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { measure_uuid, confirmed_value } = confirmSchema.parse(request.body)
   
-      const result = await this.measureService.confirmMeasure(measure_uuid, confirmed_value)
+      const result = await confirmMeasure(measure_uuid, confirmed_value)
   
       if (result.error === 'MEASURE_NOT_FOUND') {
         return reply.code(404).send({
           error_code: "MEASURE_NOT_FOUND",
           error_description: "Leitura não encontrada"
         })
-      }
+      } 
   
       if (result.error === 'CONFIRMATION_DUPLICATE') {
         return reply.code(409).send({
@@ -59,16 +66,32 @@ export class MeasureController {
       return reply.code(200).send({ success: true })
     } catch (error) {
       request.log.error(error)
-      return reply.code(400).send({
-        error_code: "INVALID_DATA",
-        error_description: error.message
-      })
+      if (error instanceof ZodError) {
+        return reply.code(400).send({
+          error_code: "INVALID_DATA",
+          error_description: error.issues.map(issue => issue.message).join(', ')
+        });
+      }
+      return reply.code(500).send({
+        error_code: "INTERNAL_SERVER_ERROR",
+        error_description: "An unexpected error occurred"
+      });
     }
-  }
+  });
 
-  async list(request: FastifyRequest<{ Params: { customerCode: string }, Querystring: { measure_type?: string } }>, reply: FastifyReply) {
+  fastify.get('/:customerCode/list', async (request: FastifyRequest<{ Params: { customerCode: string }, Querystring: { measureType?: string } }>, reply: FastifyReply) => {
     const { customerCode } = request.params
-    const { measure_type } = request.query
+    const { measureType } = request.query
+
+    const listSchema = z.object({
+      customer_code: z.string(),
+      measure_type: measureTypeEnumSchema.optional()
+    })
+
+    const { customer_code, measure_type } = listSchema.parse({
+      customer_code: customerCode,
+      measure_type: measureType
+    });
   
     if (measure_type && !['WATER', 'GAS'].includes(measure_type.toUpperCase())) {
       return reply.code(400).send({
@@ -77,7 +100,7 @@ export class MeasureController {
       })
     }
   
-    const measures = await this.measureService.listMeasures(customerCode, measure_type?.toUpperCase())
+    const measures = await listByCustomerCode(customer_code, measure_type)
   
     if (measures.length === 0) {
       return reply.code(404).send({
@@ -89,12 +112,12 @@ export class MeasureController {
     return reply.code(200).send({
       customer_code: customerCode,
       measures: measures.map(m => ({
-        measure_uuid: m.id,
-        measure_datetime: m.measureDatetime,
-        measure_type: m.measureType,
-        has_confirmed: m.hasConfirmed,
-        image_url: m.imageUrl
+        measure_uuid: m.measure_uuid,
+        measure_datetime: m.measure_datetime,
+        measure_type: m.measure_type,
+        has_confirmed: m.has_confirmed,
+        image_url: m.image_url
       }))
     })
-  }*/
+  });
 }

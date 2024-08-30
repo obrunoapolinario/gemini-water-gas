@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import logger from './libs/pino';
-import { measureRoutes } from './modules/measures/routes';
+import { measureController } from './modules/measures/controller';
 
 const createApp = async () => {
   const app = Fastify({
@@ -43,7 +43,7 @@ const createApp = async () => {
     logger.info(responseInfo, 'response sent')
   });
 
-  app.register(measureRoutes);
+  await app.register(await measureController);
 
   app.addHook('onRoute', routeOptions => {
     if (routeOptions.routePath !== '' && routeOptions.routePath !== '/*') {
