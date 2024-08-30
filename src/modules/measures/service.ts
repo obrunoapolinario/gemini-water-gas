@@ -7,12 +7,12 @@ import prisma from "../../libs/prisma";
 import { ConfirmationDuplicateError, InternalServerError, MeasureNotFoundError } from "../../errors/errors";
 
 export const createMeasure = async ({ image, customer_code, measure_datetime, measure_type }: UploadData) => {
-	const imagePath = await saveBase64Image(image);
+	const imagePath = saveBase64Image(image);
 
 	const uploadedFile = await uploadImage(imagePath, "image/png", "measure_image.png");
 
 	const prompt = `Analize esta imagem e extraia o valor da leitura de ${measure_type.toLocaleLowerCase()}. Retorne apenas o valor numérico.`;
-	const result = await generateContentWithImage(uploadedFile.uri, "image/png", prompt);
+	const result = await generateContentWithImage(uploadedFile.uri, uploadedFile.mimeType, prompt);
 
 	const measureValue = Number.parseInt(result, 10);
 	if (Number.isNaN(measureValue)) {

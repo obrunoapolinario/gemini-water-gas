@@ -7,7 +7,10 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - DATABASE_URL=postgresql://user:password@db:5432/mydb?schema=public
+      - POSTGRES_USER=${POSTGRES_USER:-defaultuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-defaultpassword}
+      - POSTGRES_DB=${POSTGRES_DB:-defaultdb}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
     depends_on:
       db:
         condition: service_healthy
@@ -15,16 +18,16 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=mydb
+      - POSTGRES_USER=${POSTGRES_USER:-defaultuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-defaultpassword}
+      - POSTGRES_DB=${POSTGRES_DB:-defaultdb}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./prisma/migrations:/migrations
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d mydb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-defaultuser} -d ${POSTGRES_DB:-defaultdb}"]
       interval: 5s
       timeout: 5s
       retries: 5
