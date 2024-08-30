@@ -15,5 +15,13 @@
 		"indentWidth": 4,
 		"lineEnding": "lf",
 		"lineWidth": 120
+	},
+	"javascript": {
+		"formatter": {
+			"indentStyle": "tab",
+			"indentWidth": 4,
+			"lineWidth": 120,
+			"semicolons": "always"
+		}
 	}
 }

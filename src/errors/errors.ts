@@ -1,25 +1,53 @@
-class AppError extends Error {
-    public readonly error_code: string;
-    constructor(message: string, error_code: string) {
-        super(message);
-        this.error_code = error_code;
-    }
+import type { HttpCodes } from "fastify/types/utils";
+
+export class AppError extends Error {
+	public readonly errorCode: string;
+	public readonly statusCode: HttpCodes;
+	constructor(message: string, error_code: string, statusCode: HttpCodes) {
+		super(message);
+		this.errorCode = error_code;
+		this.statusCode = statusCode;
+	}
 }
 
-class InvalidDataError extends AppError {
-    constructor(message: string) {
-        super(message, "INVALID_DATA");
-    }
+export class InvalidDataError extends AppError {
+	constructor(message: string) {
+		super(message, "INVALID_DATA", 400);
+	}
 }
 
-class DoubleReportError extends AppError {
-    constructor(message: string) {
-        super(message, "DOUBLE_REPORT");
-    }
+export class DoubleReportError extends AppError {
+	constructor(message: string) {
+		super(message, "DOUBLE_REPORT", 409);
+	}
 }
 
-class InternalServerError extends AppError {
-    constructor(message: string) {
-        super(message, "INTERNAL_SERVER_ERROR");
-    }
+export class ConfirmationDuplicateError extends AppError {
+	constructor(message: string) {
+		super(message, "CONFIRMATION_DUPLICATE", 409);
+	}
+}
+
+export class MeasureNotFoundError extends AppError {
+	constructor(message: string) {
+		super(message, "MEASURE_NOT_FOUND", 404);
+	}
+}
+
+export class MeasuresNotFoundError extends AppError {
+	constructor(message: string) {
+		super(message, "MEASURES_NOT_FOUND", 404);
+	}
+}
+
+export class InvalidTypeError extends AppError {
+	constructor(message: string) {
+		super(message, "INVALID_TYPE", 400);
+	}
+}
+
+export class InternalServerError extends AppError {
+	constructor(message: string) {
+		super(message, "INTERNAL_SERVER_ERROR", 500);
+	}
 }

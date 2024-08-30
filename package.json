@@ -7,8 +7,8 @@
     "start": "node --env-file=.env dist/server.js",
     "build": "tsc",
     "dev": "nodemon --exec ts-node -r dotenv/config src/server.ts | pino-pretty",
-    "lint": "biome lint --write src/**/*.ts",
-    "format": "biome format --write src/**/*.ts",
+    "lint": "biome lint --write ./src",
+    "format": "biome format --write ./src",
     "test": "vitest"
   },
   "keywords": [],
